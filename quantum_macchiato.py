@@ -19,7 +19,7 @@ def run(filename, **kwargs):
     if nproc and not exe:
         cmd = 'mpirun -np ' + str(nproc)+ ' ' + path_to_bin +'pw.x < ' + filename + '.in > ' + filename + '.out'
     if nproc and exe:
-        cmd = 'mpirun -np ' + str(nproc) + path_to_bin + exe + ' < ' + filename + '.in > ' + filename + '.out'          
+        cmd = 'mpirun -np ' + str(nproc)+ ' ' + path_to_bin + exe + ' < ' + filename + '.in > ' + filename + '.out'          
     return system(cmd)
 
 
@@ -150,15 +150,20 @@ def bands_dat_to_csv(filename, nbands, **kwargs):
 # fileout: nome do arquivo csv gerado. Ex: fileout = 'resultados_convergencia.csv'
 # param: parâmetro a se testar. Ex: param='ecutwfc'
 # seq: lista com valores a se testar. Ex: seq = [30, 40, 50]
+# Argumento opcional: nproc=nº de processadores utilizados na função run
 # OBS: a função run envolvida nesse teste salva o arquivo de saída do scf com o mesmo nome do de entrada
-def conv_test_param(filein, fileout,param, seq):
+def conv_test_param(filein, fileout,param, seq, **kwargs):
     if filein.endswith('.in'):
-        scfout = filein.strip('.in')+'.out'
+        scfout = filein[:-3]+'.out'
+    nproc_ = kwargs.get('nproc')
     #loop para calcular as energias
     tot_energy= []
     for item in seq:
         chg_param(filein,param,item)
-        run(filein)
+        if nproc_:
+            run(filein, nproc=nproc_)
+        else:
+            run(filein)
         tot_energy += [collect_totE(scfout)]
     #escreve os resultados em um csv:
     from csv import writer
