@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 #ADICIONAR path_to_bin NA FUNÇÃO run ANTES DE USAR
 
 
