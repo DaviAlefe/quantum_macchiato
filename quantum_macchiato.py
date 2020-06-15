@@ -25,7 +25,7 @@ def run(filename, **kwargs):
 
 
 
-#coleta a energia do arquivo de saída e converte para eV, dado o nome do arquivo (''). OBS: retorna a energia, mas não necessariamente printa. Ex: E = collect_energy('pt.cubic.in')
+#coleta a energia do arquivo de saída e converte para eV, dado o nome do arquivo (''). OBS: retorna a energia, mas não necessariamente printa. Ex: E = collect_totE('pt.cubic.out')
 def collect_totE(filename):
     text = open(filename, 'r')
     for line in text.readlines():
@@ -83,7 +83,7 @@ def dos_dat_to_csv(filename, **kwargs):
     fileout = kwargs.get('fileout')
     header = kwargs.get('header')
     if not fileout:
-        fileout=filename.strip('.dat') +'.csv'
+        fileout=filename +'.csv'
     infile = open(filename, 'rt')
     lines = infile.readlines()
     
@@ -118,7 +118,7 @@ def bands_dat_to_csv(filename, nbands, **kwargs):
 
     fileout = kwargs.get('fileout')
     if not fileout:
-        fileout = filename.strip('.dat') +'.csv'
+        fileout = filename +'.csv'
     infile = open(filename, 'rt')
     lines = infile.readlines()
     data = lines[1:len(lines)]
