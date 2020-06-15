@@ -27,11 +27,16 @@ def run(filename, **kwargs):
 
 #coleta a energia do arquivo de saída e converte para eV, dado o nome do arquivo (''). OBS: retorna a energia, mas não necessariamente printa. Ex: E = collect_totE('pt.cubic.out')
 def collect_totE(filename):
-    text = open(filename, 'r')
-    for line in text.readlines():
-        if '!' in line:
-            energy = float(line.split()[4]) * 13.6056980659
-    text.close()
+    infile = open(filename, 'r')
+    text = infile.read()
+    lines = text.splitlines()
+    if '!' in text:
+        for line in lines:
+            if '!' in line:
+                energy = float(line.split()[4]) * 13.6056980659
+    else:
+        energy = float('NaN')
+    infile.close()
     return energy
 
 # EM CONSTRUÇÃO
