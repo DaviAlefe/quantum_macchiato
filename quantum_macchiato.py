@@ -40,12 +40,24 @@ def collect_totE(filename):
     return energy
 
 # EM CONSTRUÇÃO
-#def collect_Efermi(filename):
+def collect_Efermi(filename):
+    infile = open(filename, 'r')
+    text = infile.read()
+    lines = text.splitlines()
+    if 'the Fermi energy is' in text:
+        for line in lines:
+            if 'the Fermi energy is' in line:
+                energy = float(line.split()[4]) * 13.6056980659
+    else:
+        energy = float('NaN')
+    infile.close()
+    return energy   
 
 # Altera um parâmetro no arquivo 'filename'.
 #Só funciona se o argumento a se alterar estiver sozinho na linha
 #Argumentos: param(string), param_value(string, float ou int).
-#Exemplo: chg_param('pt.cubic.in', param='nat', param_value=3) altera a variável nat para o valor 3 no arquivo pt.cubic.in
+#Exemplo: chg_param('pt.cubic.in','nat',3) altera a variável nat para o valor 3 no arquivo pt.cubic.in
+#PS: deve haver um espaço antes e após o sinal de igual no arquivo a se alterar
 def chg_param(filename, param, param_value):
     infile = open(filename, 'rt')
     text = infile.readlines()
