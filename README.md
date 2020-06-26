@@ -3,7 +3,7 @@ Python module in development for automating the use of Quantum Espresso, a softw
 
 For now, it's pretty much a collection of functions, altough it really makes it a lot easier to use QE.
 
-Before using, add to the run function (the first in the file) the path to the bin directory in the QE directory of your PC.
+Before using, add to the run function (the first in the file) the path to the bin directory in the QE directory in your PC.
 
 When using, you can import it in a python script just like any other library (ex: import quantum_macchiato as qm), since one of the two are met: (1) the quantum_macchiato file is in the same folder where the script will be ran; (2) the quantum_macchiato file is in the python path.
 
