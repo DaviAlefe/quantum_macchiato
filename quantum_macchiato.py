@@ -5,27 +5,23 @@
 ## Recebe nome do arquivo e passa pro QE rodar. Por default, utiliza o executável pw.x e dois processadores.
 #Argumentos opcionais:
 #(1) exe(string): caso o executável chamado não seja o pw.x, especificar (ex: exe='ph.x');
-#(2) nprocs(float ou int) Caso não se deseje usar um único processador, especificar (Ex: nproc=1).
+#(2) nproc(float ou int): número de processadores.(Ex: nproc=1).
 #Ex: run('ag.bands.in', nproc=1, exe='bands.x')
 def run(filename, **kwargs):
-    from os import system
-    path_to_bin = '../QE/bin/' #adicionar em cada PC 
+    path_to_bin = '../QE/bin/' #adicionar em cada PC, com barra no final 
     if filename.endswith('.in'):
         filename = filename[:-3]    
     exe = kwargs.get('exe')
     nproc = kwargs.get('nproc')
-    cmd = 'mpirun -np 2 '+ path_to_bin + 'pw.x'  +' < ' + filename + '.in > ' + filename + '.out'
-    if exe and not nproc:
-        cmd = 'mpirun -np 2 '+ path_to_bin + exe + ' < ' + filename + '.in > ' + filename + '.out'
-    if nproc and not exe:
-        cmd = 'mpirun -np ' + str(nproc)+ ' ' + path_to_bin +'pw.x < ' + filename + '.in > ' + filename + '.out'
-    if nproc and exe:
-        cmd = 'mpirun -np ' + str(nproc)+ ' ' + path_to_bin + exe + ' < ' + filename + '.in > ' + filename + '.out'          
+    if not exe:
+        exe = 'pw.x'
+    if not nproc:
+        nproc = 2
+    cmd = f'mpirun -np {nproc} {path_to_bin}{exe} < {filename}.in > {filename}.out'
+    from os import system
     return system(cmd)
 
-
-
-#coleta a energia do arquivo de saída e converte para eV, dado o nome do arquivo (''). OBS: retorna a energia, mas não necessariamente printa. Ex: E = collect_totE('pt.cubic.out')
+# Coleta a energia total do arquivo de saída (é aplicado um fator de conversão sobre a energia, assumindo que sua unidade é Rydberg, para transformá-la para eV), dado o nome do arquivo como string. Ex: E = collect_totE('pt.cubic.out')
 def collect_totE(filename):
     infile = open(filename, 'r')
     text = infile.read()
@@ -39,7 +35,7 @@ def collect_totE(filename):
     infile.close()
     return energy
 
-# EM CONSTRUÇÃO
+# Coleta a energia de Fermi, se ela estiver no arquivo. Ex: Efermi = collect_Efermi('pt.cubic.out')
 def collect_Efermi(filename):
     infile = open(filename, 'r')
     text = infile.read()
@@ -47,7 +43,7 @@ def collect_Efermi(filename):
     if 'the Fermi energy is' in text:
         for line in lines:
             if 'the Fermi energy is' in line:
-                energy = float(line.split()[4]) * 13.6056980659
+                energy = float(line.split()[4])
     else:
         energy = float('NaN')
     infile.close()
@@ -57,7 +53,6 @@ def collect_Efermi(filename):
 #Só funciona se o argumento a se alterar estiver sozinho na linha
 #Argumentos: param(string), param_value(string, float ou int).
 #Exemplo: chg_param('pt.cubic.in','nat',3) altera a variável nat para o valor 3 no arquivo pt.cubic.in
-#PS: deve haver um espaço antes e após o sinal de igual no arquivo a se alterar
 def chg_param(filename, param, param_value):
     infile = open(filename, 'rt')
     text = infile.readlines()
@@ -65,10 +60,10 @@ def chg_param(filename, param, param_value):
     for line in text:
         if param in line:
             i = text.index(line)
-            line_i = text[i].split()
+            line_i = text[i].split('=')
             if type(param_value) != str:
-                line_i[2] = str(param_value)
-            text[i] = '\t' + ' '.join(line_i) + '\n'
+                line_i[1] = str(param_value)
+            text[i] = '='.join(line_i) + '\n'
     text = ''.join(text)
     infile.close()
     infile = open(filename, 'wt')
@@ -93,14 +88,15 @@ def chg_kpoints(filename, X):
 ## Recebe o arquivo .dat de saída do cálculo da DOS ou pDOS e gera um csv, com o mesmo nome, por padrão.
 # Se utilizado com o arquivo de saída da DOS, usar o argumento "header". A energia de Fermi não aparecerá no arquivo de saída.
 # Obs: se não funcionar, provavelmente é erro de leitura na primeira linha. A primeira linha é printada, para verificação. Se estiver errada, adicionar manualmente com o argumento 'header'.
-#Argumento opcional: fileout = nome do arquivo de saída. Ex: dos_dat_to_csv('entrada.dat','fileout='saida.csv')
-#Argumento opcional: header = adicionar nome das colunas manualmente (lista de strings). Ex: dos_dat_to_csv('entrada.dat',header=['E (eV)', 'pdos (E)'])
-def dos_dat_to_csv(filename, **kwargs):
+#Argumento opcional: fileout = nome do arquivo de saída. Ex: dos_dat_to_csv('entrada.dat',fileout='saida.csv')
+#Argumento opcional: header = adicionar nome das colunas manualmente (lista de strings). Ex: dos_dat_to_csv('entrada.dat',header=['E (eV)', 'pdos', '(E)'])
+def dos_dat2csv(filename, **kwargs):
 
     fileout = kwargs.get('fileout')
     header = kwargs.get('header')
     if not fileout:
-        fileout=filename +'.csv'
+        fileout=filename.split('.dat')
+        fileout=''.join(fileout) +'.csv'
     infile = open(filename, 'rt')
     lines = infile.readlines()
     
@@ -129,13 +125,14 @@ def dos_dat_to_csv(filename, **kwargs):
 # Transforma arquivo de saída .dat de bandas para arquivo em csv, com formatação mais adequada.
 # Argumentos: filename=nome do arquivo de entrada, nbands=quantidade de bandas no arquivo de saída (tem na primeira linha do arquivo .dat)
 # Argumento opcional: fileout=nome do arquivo de saída. Ex: fileout='pt.bands.csv'
-def bands_dat_to_csv(filename, nbands, **kwargs):
+def bands_dat2csv(filename, nbands, **kwargs):
     import numpy as np
     from pandas import DataFrame
 
     fileout = kwargs.get('fileout')
     if not fileout:
-        fileout = filename +'.csv'
+        fileout=filename.split('.dat')
+        fileout=''.join(fileout) +'.csv'
     infile = open(filename, 'rt')
     lines = infile.readlines()
     data = lines[1:len(lines)]
